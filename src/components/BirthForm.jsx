@@ -8,9 +8,30 @@ const ZONES = (() => {
   }
 })();
 
+// Typed birth date in MM/DD/YYYY; slashes are inserted as you type.
+function formatDateDigits(value) {
+  const d = value.replace(/\D/g, '').slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+}
+
+function toIsoDate(text) {
+  const m = text.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return '';
+  const [, mm, dd, yyyy] = m.map(Number);
+  const d = new Date(Date.UTC(yyyy, mm - 1, dd));
+  const valid = yyyy >= 1800 && yyyy <= 2100 && d.getUTCMonth() === mm - 1 && d.getUTCDate() === dd;
+  return valid ? `${m[3]}-${m[1]}-${m[2]}` : '';
+}
+
+const fromIsoDate = (iso) => (iso ? `${iso.slice(5, 7)}/${iso.slice(8, 10)}/${iso.slice(0, 4)}` : '');
+
 export default function BirthForm({ initial, onSave, onCancel, title = 'Create your chart' }) {
   const [name, setName] = useState(initial?.name || '');
-  const [date, setDate] = useState(initial?.date || '');
+  const [dateText, setDateText] = useState(fromIsoDate(initial?.date));
+  const date = toIsoDate(dateText);
+  const dateInvalid = dateText.length === 10 && !date;
   const [time, setTime] = useState(initial?.time || '12:00');
   const [unknownTime, setUnknownTime] = useState(initial?.unknownTime || false);
   const [query, setQuery] = useState(initial?.place || '');
@@ -83,7 +104,17 @@ export default function BirthForm({ initial, onSave, onCancel, title = 'Create y
       <div className="row2">
         <label>
           <span>Birth date</span>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} max="2100-12-31" />
+          <input
+            value={dateText}
+            onChange={(e) => setDateText(formatDateDigits(e.target.value))}
+            placeholder="MM/DD/YYYY"
+            inputMode="numeric"
+            autoComplete="bday"
+            maxLength={10}
+            aria-invalid={dateInvalid}
+            className={dateInvalid ? 'invalid' : undefined}
+          />
+          {dateInvalid && <small className="field-error">That date doesn’t exist — check month and day.</small>}
         </label>
         <label>
           <span>Birth time</span>

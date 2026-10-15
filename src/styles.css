@@ -616,6 +616,13 @@ input:focus,
 select:focus {
   border-color: var(--accent2);
 }
+input.invalid {
+  border-color: var(--design);
+}
+.field-error {
+  color: var(--design);
+  font-size: 0.78rem;
+}
 .row2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
